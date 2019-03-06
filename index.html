@@ -9,6 +9,8 @@
         var port = null;
         var offset = 0;
         var sp = require('serialport');
+        console.log(sp.parsers);
+        const Readline = sp.parsers.Readline;
         var interval = null;
         function getPorts() {
             $('#SerialPorts').find('option').remove().end();
@@ -28,20 +30,49 @@
         function startTimer() {
             
         }
+        function sleepP(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        async function sleep(time) {
+            await sleepP(time);
+        }
         function connect() {
             if (connected == 0) {
                 var serialport = $('#SerialPorts').val();
                 connected = 1;
                 $("#connect").prop('value', 'Disconnect');
-                port = new sp(serialport, {baudRate: 9600});
+                port = new sp(serialport, {
+                    baudRate: 9600,
+                });
+
                 $('#resetTrack').prop('disabled', false);
                 port.on('open', function() {
                     console.log("Port Opened!");
-                    port.write('*\r\n');
+                    //port.write('*\r\n');
+                    port.write("\r\n\r\n");
                 });
-                port.on('readable', function () {
-                    console.log('Data:', port.read());
+                const parser = port.pipe(new Readline({ delimiter: '\r\n' }));
+                parser.on('data', function(data) {
+                    console.log(data);
+                    if (data.includes("* Special events")) {
+                        console.log("Here!!!!!!");
+                        port.write("manager\n");
+                        port.write("not4all.!\n");
+                        port.write("no page\n");
+                        port.write("sh run\n");
+                    }
+                    if (data.includes("password operator")) {
+                        console.log("Got it!\n");
+                        port.write("sh tech\n");
+                    }
                 });
+
+                
+                /*
+                port.on('data', function (data) {
+                    console.log(data.toString('utf8'));
+                });
+                */
             } else {
                 $("#connect").prop('value', 'Connect');    
                 connected = 0;
