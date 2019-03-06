@@ -1,4 +1,3 @@
-const SerialPort = require('serialport')
 const { app, BrowserWindow } = require('electron')
 
 let win
@@ -6,9 +5,8 @@ let win
 function createWindow () {
   win = new BrowserWindow({ width: 800, height: 600, toolbar: false,  icon: __dirname + '/images/favicon.png', })
   win.loadFile('index.html')
-  //win.webContents.openDevTools()
+  win.webContents.openDevTools()
   win.setMenuBarVisibility(false)
-  console.log(SerialPort.list);
   win.on('closed', () => {
     win = null
   })

@@ -3,12 +3,107 @@
   <head>
     <meta charset="UTF-8">
     <title>ANPrix</title>
+    <script>window.$ = window.jQuery = require('./js/jquery.js');</script>
+    <script>
+        var connected = 0;  
+        var port = null;
+        var offset = 0;
+        var sp = require('serialport');
+        var interval = null;
+        function getPorts() {
+            $('#SerialPorts').find('option').remove().end();
+            var count=0;
+            sp.list(function(err, ports) {
+                console.log(ports[count].comName);
+                $('#SerialPorts').append($('<option></option>').val(ports[count].comName).html(ports[count].comName));
+                count++;
+            });
+        }
+        
+        function resetTrack() {
+            if (connected == 1) {
+                port.write('*\r\n');
+            }
+        }
+        function startTimer() {
+            
+        }
+        function connect() {
+            if (connected == 0) {
+                var serialport = $('#SerialPorts').val();
+                connected = 1;
+                $("#connect").prop('value', 'Disconnect');
+                port = new sp(serialport, {baudRate: 9600});
+                $('#resetTrack').prop('disabled', false);
+                port.on('open', function() {
+                    console.log("Port Opened!");
+                    port.write('*\r\n');
+                });
+                port.on('readable', function () {
+                    console.log('Data:', port.read());
+                });
+            } else {
+                $("#connect").prop('value', 'Connect');    
+                connected = 0;
+                port.close();
+                $('#resetTrack').prop('disabled', true);
+            }
+        }
+        function update() {
+                now   = Date.now();
+                var current = now-offset;
+                currentSec = current/1000;
+                var res = currentSec.toString().split(".");
+                while (res[1].length < 3) {
+                    res[1] = res[1] + 0;
+                }
+                $('#timer').text(res[0]+"."+res[1]);
+        }
+
+        function start() {
+            if (!interval) {
+                offset   = Date.now();
+                interval = setInterval(update, 10);
+                console.log(offset);
+            }
+        }
+        function stop() {
+            if (interval) {
+                clearInterval(interval);
+            }
+        }
+        $( document ).ready(function() {
+            getPorts();
+        });
+    </script>  
   </head>
   <body>
     <div align="left">
         <img src="images/logo.png">
     </div>
-
-
+    <div align="left">
+        Serial Port: <select id='SerialPorts'></select> <input type="button" value="Refresh" onClick="getPorts()"> <input type="button" id="connect" value="Connect" onClick="connect()">
+    </div>
+    <br />
+    <div align="left">
+        Lane 1: <span id="lane1"></span> <span id="place1"></span>
+    </div>
+    <div align="left">
+        Lane 2: <span id="lane2"></span> <span id="place2"></span>
+    </div>
+    <div align="left">
+        Lane 3: <span id="lane3"></span> <span id="place3"></span>
+    </div>
+    <div align="left">
+        Lane 4: <span id="lane4"></span> <span id="place4"></span>
+    </div>
+    <br />
+    <div align="left">
+        <input type="button" id="resetTrack" value="Reset Track" onClick="resetTrack()" disabled>        
+    </div>
+    <br />
+    <div align="left">
+        <span id="timer">0.000</span> 
+    </div>    
   </body>
 </html>
